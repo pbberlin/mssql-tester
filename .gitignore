@@ -1,5 +1,8 @@
 mssql-tester.exe
 connect.json
+example.pem
+*.pem
 *.exe
 *.exe~
 *.log
+cert_new/*

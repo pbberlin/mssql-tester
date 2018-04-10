@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/denisenkom/go-mssqldb" // the underscore indicates the package is used
+	_ "github.com/denisenkom/go-mssqldb"
 )
 
 // the user needs to be setup in SQL Server as an SQL Server user.
@@ -21,24 +21,30 @@ import (
 // also need to enable TCP protocol in SQL Server Configuration Manager.
 
 type tcn struct {
-	Server        string `json:"server,omitempty"`
-	Port          int    `json:"port,omitempty"`
-	UserId        string `json:"user_id,omitempty"`
-	Password      string `json:"password,omitempty"`
-	AppName       string `json:"app_name,omitempty"`
-	Encrypt       bool   `json:"encrypt,omitempty"`
+	Server   string `json:"server,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	UserId   string `json:"user_id,omitempty"`
+	Password string `json:"password,omitempty"`
+	AppName  string `json:"app_name,omitempty"`
+
+	Encrypt     bool   `json:"encrypt,omitempty"`
+	Certificate string `json:"certificate,omitempty"` // file to public key
+
 	Statement     string `json:"statement,omitempty"`
 	EveryNMinutes int    `json:"every_n_minutes,omitempty"`
 }
 
 func newCn() tcn {
 	t := tcn{
-		Server:        "localhost",
-		Port:          1433,
-		UserId:        "gouser",
-		Password:      "g0us3r",
-		Encrypt:       true,
-		AppName:       "pandb-mssql-heartbeat",
+		Server:   "localhost",
+		Port:     1433,
+		UserId:   "gouser",
+		Password: "g0us3r",
+		AppName:  "pandb-mssql-heartbeat",
+
+		Encrypt:     true,
+		Certificate: "example.pem",
+
 		Statement:     "SELECT SYSDATETIME() ",
 		EveryNMinutes: 10,
 	}
@@ -51,8 +57,14 @@ func shortTime() string {
 
 func (t *tcn) CnString() string {
 	str := fmt.Sprintf("server=%v;port=%d;user id=%v;password=%v;", t.Server, t.Port, t.UserId, t.Password)
-	str += fmt.Sprintf("encrypt=%t;", t.Encrypt)
 	str += fmt.Sprintf("app name=%s;", t.AppName)
+	str += fmt.Sprintf("encrypt=%t;", t.Encrypt)
+	if t.Encrypt {
+		str += fmt.Sprintf("certificate=%s;", t.Certificate)
+		// this is still mysterious - if omitted we get
+		// x509: certificate is not valid for any names, but wanted to match 'pandb'"
+		str += fmt.Sprintf("TrustServerCertificate=true")
+	}
 	return str
 }
 
@@ -101,12 +113,20 @@ func main() {
 func testCn(cn *tcn) {
 
 	log.Printf("About to connect to %v", cn)
+
 	conn, err := sql.Open("mssql", cn.CnString())
 	if err != nil {
 		log.Printf("%v Open connection failed: %v\n", shortTime(), err)
 		return
 	}
 	defer conn.Close()
+
+	err = conn.Ping()
+	if err != nil {
+		log.Printf("%v Ping failed: %v\n", shortTime(), err)
+		return
+	}
+
 	makeQuery(cn, conn)
 	time.Sleep(2 * time.Minute)
 	makeQuery(cn, conn)
@@ -130,6 +150,6 @@ func makeQuery(cn *tcn, conn *sql.DB) {
 		log.Printf("%v Scan failed: %v\n", shortTime(), err)
 		return
 	}
-	fmt.Printf("%v Successful query: %v  =>  %s\n", shortTime(), cn.Statement, resultCol)
+	log.Printf("%v Successful query: %v  =>  %s\n", shortTime(), cn.Statement, resultCol)
 
 }

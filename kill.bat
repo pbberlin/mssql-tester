@@ -1,0 +1,1 @@
+taskkill /IM mssql-tester.exe /F

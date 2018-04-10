@@ -5,6 +5,7 @@
   "password": "g0us3r",
   "app_name": "pandb-mssql-heartbeat",
   "encrypt": true,
+  "certificate": "example.pem",
   "statement": "SELECT SYSDATETIME() ",
   "every_n_minutes": 10
 }
