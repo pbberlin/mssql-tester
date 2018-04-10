@@ -13,12 +13,12 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 )
 
-// the user needs to be setup in SQL Server as an SQL Server user.
-// see create login and the create user SQL commands as well as the
+// The user needs to be setup in SQL Server as an SQL Server user.
+// See create login and the create user SQL commands as well as the
 // SQL Server Management Studio documentation to turn on Hybrid Authentication
 // which allows both Windows Authentication and SQL Server Authentication.
-// also need to grant to the user the proper access permissions.
-// also need to enable TCP protocol in SQL Server Configuration Manager.
+// Also need to grant to the user the proper access permissions.
+// Also need to enable TCP protocol in SQL Server Configuration Manager.
 
 type tcn struct {
 	Server   string `json:"server,omitempty"`
@@ -132,7 +132,6 @@ func testCn(cn *tcn) {
 	makeQuery(cn, conn)
 	// var ctx context.Context
 	// conn.QueryContext(ctx, `select * from t where ID = @ID and Name = @p2;`, sql.Named("ID", 6), "Bob")
-	// stmt, err := conn.Prepare("select 1, 'abc'")
 }
 
 func makeQuery(cn *tcn, conn *sql.DB) {
